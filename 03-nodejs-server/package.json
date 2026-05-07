@@ -1,0 +1,10 @@
+{
+  "name": "nodejs-server",
+  "version": "1.0.0",
+  "description": "Simple Node.js server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}

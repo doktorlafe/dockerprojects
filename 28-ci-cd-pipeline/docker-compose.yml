@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  gitlab:
+    image: gitlab/gitlab-ee:latest
+    ports:
+      - "80:80"
+      - "443:443"
+      - "22:22"
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost'
+    volumes:
+      - gitlab_data:/var/opt/gitlab
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    ports:
+      - "8080:8080"
+    volumes:
+      - jenkins_data:/var/jenkins_home
+
+volumes:
+  gitlab_data:
+  jenkins_data:
