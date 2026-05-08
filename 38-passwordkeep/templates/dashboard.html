@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Trezor | PasswordKeep{% endblock %}
+
+{% block content %}
+<section class="hero-card">
+  <div>
+    <span class="eyebrow">Trezor</span>
+    <h1>Ulozene pristupy</h1>
+    <p>Vsechna hesla jsou v databazi ulozena sifrovane a dekriptuji se az po prihlaseni.</p>
+  </div>
+  <a class="primary-button" href="{{ url_for('create_entry') }}">Pridat zaznam</a>
+</section>
+
+<section class="toolbar">
+  <form class="search-form" method="get">
+    <input type="search" name="search" placeholder="Hledat podle sluzby, loginu nebo poznamky" value="{{ search }}">
+    <button class="ghost-button" type="submit">Hledat</button>
+  </form>
+  <div class="meta-count">{{ entries|length }} zaznamu</div>
+</section>
+
+<section class="card-grid">
+  {% for entry in entries %}
+  <article class="entry-card">
+    <div class="entry-head">
+      <div>
+        <h2>{{ entry.site_name }}</h2>
+        {% if entry.site_url %}
+        <a href="{{ entry.site_url }}" target="_blank" rel="noreferrer">{{ entry.site_url }}</a>
+        {% endif %}
+      </div>
+      <div class="card-actions">
+        <a class="ghost-button" href="{{ url_for('edit_entry', entry_id=entry.id) }}">Upravit</a>
+        <form action="{{ url_for('delete_entry', entry_id=entry.id) }}" method="post" onsubmit="return confirm('Smazat zaznam?');">
+          <button class="danger-button" type="submit">Smazat</button>
+        </form>
+      </div>
+    </div>
+
+    <dl class="entry-data">
+      <div>
+        <dt>Login</dt>
+        <dd>{{ entry.username }}</dd>
+      </div>
+      <div>
+        <dt>Heslo</dt>
+        <dd>
+          <span id="password-{{ entry.id }}" data-value="{{ entry.plain_password }}" data-masked="true">••••••••••••</span>
+        </dd>
+      </div>
+      {% if entry.notes %}
+      <div>
+        <dt>Poznamky</dt>
+        <dd>{{ entry.notes }}</dd>
+      </div>
+      {% endif %}
+    </dl>
+
+    <div class="card-actions compact-actions">
+      <button class="ghost-button" type="button" data-toggle-password="#password-{{ entry.id }}">Zobrazit / skryt</button>
+      <button class="ghost-button" type="button" data-copy-target="#password-{{ entry.id }}" data-label="Kopirovat heslo">Kopirovat heslo</button>
+    </div>
+  </article>
+  {% else %}
+  <article class="empty-state">
+    <h2>Zatim tu nic neni</h2>
+    <p>Prvni ulozeny zaznam vytvoris pres tlacitko nahore.</p>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}

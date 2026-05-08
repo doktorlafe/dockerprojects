@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}PasswordKeep{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div>
+        <a class="brand" href="{{ url_for('index') }}">PasswordKeep</a>
+        <p class="tagline">Soukromy trezor pro tvoje pristupy</p>
+      </div>
+      {% if session.get('authenticated') %}
+      <form action="{{ url_for('logout') }}" method="post">
+        <button class="ghost-button" type="submit">Odhlasit</button>
+      </form>
+      {% endif %}
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <section class="flash-stack">
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </section>
+      {% endif %}
+    {% endwith %}
+
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script>
+    document.querySelectorAll('[data-copy-target]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const selector = button.getAttribute('data-copy-target');
+        const target = document.querySelector(selector);
+        if (!target) {
+          return;
+        }
+        const text = target.getAttribute('data-value') || target.textContent.trim();
+        await navigator.clipboard.writeText(text);
+        button.textContent = 'Zkopirovano';
+        setTimeout(() => {
+          button.textContent = button.getAttribute('data-label');
+        }, 1500);
+      });
+    });
+
+    document.querySelectorAll('[data-toggle-password]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const selector = button.getAttribute('data-toggle-password');
+        const target = document.querySelector(selector);
+        if (!target) {
+          return;
+        }
+        const masked = target.getAttribute('data-masked') === 'true';
+        target.textContent = masked ? target.getAttribute('data-value') : '••••••••••••';
+        target.setAttribute('data-masked', masked ? 'false' : 'true');
+      });
+    });
+
+    const generatorButton = document.querySelector('[data-generate-password]');
+    if (generatorButton) {
+      generatorButton.addEventListener('click', () => {
+        const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+';
+        const length = 20;
+        let result = '';
+        const randomValues = new Uint32Array(length);
+        window.crypto.getRandomValues(randomValues);
+        randomValues.forEach((value) => {
+          result += alphabet[value % alphabet.length];
+        });
+        const field = document.querySelector(generatorButton.getAttribute('data-generate-password'));
+        if (field) {
+          field.value = result;
+        }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+services:
+  postgres-primary:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPERUSER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERPASS:-adminpass}
+      POSTGRES_DB: ${POSTGRES_DB:-appdb}
+      APP_DB_USER: ${APP_DB_USER:-app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-apppass}
+      REPLICATION_USER: ${REPLICATION_USER:-replicator}
+      REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:-replicatorpass}
+    ports:
+      - "${PRIMARY_PORT:-5435}:5432"
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - hba_file=/etc/postgresql/pg_hba.conf
+    volumes:
+      - primary_data:/var/lib/postgresql/data
+      - ./postgres/primary/conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres/primary/conf/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./postgres/primary/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_SUPERUSER:-admin} -d ${POSTGRES_DB:-appdb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  postgres-replica:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      PGDATA: /var/lib/postgresql/data
+      PGPASSWORD: ${REPLICATION_PASSWORD:-replicatorpass}
+      REPLICATION_USER: ${REPLICATION_USER:-replicator}
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    ports:
+      - "${REPLICA_PORT:-5436}:5432"
+    command: >
+      bash -ceu '
+        if [ ! -s "$$PGDATA/PG_VERSION" ]; then
+          rm -rf "$$PGDATA"/*
+          until pg_basebackup \
+            -h postgres-primary \
+            -D "$$PGDATA" \
+            -U "$$REPLICATION_USER" \
+            -v -P -R; do
+            echo "Waiting for primary to accept replication connections..."
+            sleep 2
+          done
+        fi
+        exec docker-entrypoint.sh postgres
+      '
+    volumes:
+      - replica_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_SUPERUSER:-admin} -d ${POSTGRES_DB:-appdb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    restart: unless-stopped
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin123}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+  migrate:
+    image: postgres:16
+    restart: "no"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations:ro
+    command: >
+      sh -ceu '
+        for file in /migrations/*.sql; do
+          echo "Applying $$file"
+          psql "postgresql://${POSTGRES_SUPERUSER:-admin}:${POSTGRES_SUPERPASS:-adminpass}@postgres-primary:5432/${POSTGRES_DB:-appdb}" -v ON_ERROR_STOP=1 -f "$$file"
+        done
+      '
+
+  seed:
+    image: postgres:16
+    restart: "no"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./seed:/seed:ro
+    command: >
+      sh -ceu '
+        for file in /seed/*.sql; do
+          echo "Seeding $$file"
+          psql "postgresql://${POSTGRES_SUPERUSER:-admin}:${POSTGRES_SUPERPASS:-adminpass}@postgres-primary:5432/${POSTGRES_DB:-appdb}" -v ON_ERROR_STOP=1 -f "$$file"
+        done
+      '
+
+  backup:
+    image: postgres:16
+    restart: unless-stopped
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    volumes:
+      - ./backups:/backups
+    command: >
+      sh -ceu '
+        mkdir -p /backups
+        while true; do
+          timestamp=$$(date +%Y%m%d-%H%M%S)
+          pg_dump "postgresql://${POSTGRES_SUPERUSER:-admin}:${POSTGRES_SUPERPASS:-adminpass}@postgres-primary:5432/${POSTGRES_DB:-appdb}" --format=custom --file="/backups/${POSTGRES_DB:-appdb}-$$timestamp.dump"
+          find /backups -type f -name "*.dump" -mtime +2 -delete
+          sleep ${BACKUP_INTERVAL_SECONDS:-300}
+        done
+      '
+
+volumes:
+  primary_data:
+  replica_data:
+  pgadmin_data:

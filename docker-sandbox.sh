@@ -12,6 +12,7 @@ usage() {
 Použití:
   ./docker-sandbox.sh start
   ./docker-sandbox.sh stop
+    ./docker-sandbox.sh clean
   ./docker-sandbox.sh destroy
   ./docker-sandbox.sh list
   ./docker-sandbox.sh status
@@ -108,6 +109,22 @@ stop_sandbox() {
     fi
 }
 
+clean_sandbox() {
+    ensure_docker
+    ensure_sandbox_running
+
+    docker exec "$SANDBOX_NAME" sh -lc '
+        set -eu
+        container_ids="$(docker ps -aq)"
+        if [[ -n "$container_ids" ]]; then
+            docker stop $container_ids >/dev/null
+        fi
+        docker system prune -af --volumes >/dev/null
+    '
+
+    echo "Sandbox Docker daemon byl vyčištěn: kontejnery zastaveny, nepoužívané image, sítě a volumes odstraněny."
+}
+
 destroy_sandbox() {
     ensure_docker
     docker rm -f "$SANDBOX_NAME" >/dev/null 2>&1 || true
@@ -155,6 +172,9 @@ main() {
             ;;
         stop)
             stop_sandbox
+            ;;
+        clean)
+            clean_sandbox
             ;;
         destroy)
             destroy_sandbox

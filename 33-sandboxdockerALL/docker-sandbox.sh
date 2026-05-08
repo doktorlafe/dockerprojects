@@ -8,20 +8,50 @@ SANDBOX_IMAGE="docker:27-dind"
 SANDBOX_VOLUME="docker-examples-sandbox-data"
 
 usage() {
-    cat <<'EOF'
+        cat <<'EOF'
 Použití:
-  ./docker-sandbox.sh start
-  ./docker-sandbox.sh stop
-  ./docker-sandbox.sh destroy
-  ./docker-sandbox.sh list
-  ./docker-sandbox.sh status
-  ./docker-sandbox.sh up <projekt|all>
-  ./docker-sandbox.sh down <projekt|all>
-  ./docker-sandbox.sh shell
+    ./docker-sandbox.sh start
+    ./docker-sandbox.sh stop
+    ./docker-sandbox.sh clean
+    ./docker-sandbox.sh destroy
+    ./docker-sandbox.sh list
+    ./docker-sandbox.sh status
+    ./docker-sandbox.sh up <projekt|all>
+    ./docker-sandbox.sh down <projekt|all>
+    ./docker-sandbox.sh shell
 
 Co to dělá:
   Spustí samostatný Docker-in-Docker sandbox, ve kterém běží docker-projects.sh.
   Tím se kontejnery, sítě i volumes drží mimo hlavní Docker daemon serveru.
+
+Příkazy:
+    start
+        Vytvoří a spustí sandbox kontejner. Pokud už existuje, jen ho znovu nastartuje.
+
+    stop
+        Zastaví sandbox kontejner, ale ponechá jeho data volume pro další spuštění.
+
+    clean
+        Uvnitř sandboxu zastaví všechny kontejnery a smaže nepoužívané images,
+        sítě a volumes přes docker system prune.
+
+    destroy
+        Odstraní celý sandbox kontejner i jeho persistentní Docker data volume.
+
+    list
+        Uvnitř sandboxu spustí ./docker-projects.sh list a vypíše dostupné projekty.
+
+    status
+        Ukáže, zda sandbox běží, a když ano, vypíše kontejnery běžící uvnitř něj.
+
+    up <projekt|all>
+        Uvnitř sandboxu spustí ./docker-projects.sh up pro jeden projekt nebo pro all.
+
+    down <projekt|all>
+        Uvnitř sandboxu spustí ./docker-projects.sh down pro jeden projekt nebo pro all.
+
+    shell
+        Otevře interaktivní shell přímo uvnitř sandbox kontejneru.
 
 Poznámky:
   Sandbox používá privileged kontejner a vlastní Docker data volume.
@@ -108,6 +138,22 @@ stop_sandbox() {
     fi
 }
 
+clean_sandbox() {
+    ensure_docker
+    ensure_sandbox_running
+
+    docker exec "$SANDBOX_NAME" sh -lc '
+        set -eu
+        container_ids="$(docker ps -aq)"
+        if [[ -n "$container_ids" ]]; then
+            docker stop $container_ids >/dev/null
+        fi
+        docker system prune -af --volumes >/dev/null
+    '
+
+    echo "Sandbox Docker daemon byl vyčištěn: kontejnery zastaveny, nepoužívané image, sítě a volumes odstraněny."
+}
+
 destroy_sandbox() {
     ensure_docker
     docker rm -f "$SANDBOX_NAME" >/dev/null 2>&1 || true
@@ -155,6 +201,9 @@ main() {
             ;;
         stop)
             stop_sandbox
+            ;;
+        clean)
+            clean_sandbox
             ;;
         destroy)
             destroy_sandbox

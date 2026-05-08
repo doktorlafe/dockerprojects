@@ -1,0 +1,1 @@
+ahoj chci jen docker compose pro ghosta.

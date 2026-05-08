@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Prihlaseni | PasswordKeep{% endblock %}
+
+{% block content %}
+<section class="panel auth-panel">
+  <div>
+    <span class="eyebrow">Prihlaseni</span>
+    <h1>Odemkni trezor</h1>
+    <p>Master heslo se pouzije pro overeni i odvozeni sifrovaciho klice pro aktualni relaci.</p>
+  </div>
+
+  <form class="stack-form" method="post">
+    <label>
+      <span>Master heslo</span>
+      <input type="password" name="password" required autofocus>
+    </label>
+    <button class="primary-button" type="submit">Prihlasit</button>
+  </form>
+</section>
+{% endblock %}

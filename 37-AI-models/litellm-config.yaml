@@ -1,0 +1,18 @@
+model_list:
+  - model_name: deepseek-local
+    litellm_params:
+      model: ollama_chat/deepseek-r1:8b
+      api_base: http://ollama:11434
+
+  - model_name: llama-local
+    litellm_params:
+      model: ollama_chat/llama3.1:8b
+      api_base: http://ollama:11434
+
+litellm_settings:
+  drop_params: true
+
+router_settings:
+  routing_strategy: simple-shuffle
+  num_retries: 2
+  timeout: 60

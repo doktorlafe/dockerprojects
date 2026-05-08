@@ -1,0 +1,13 @@
+services:
+  passwordkeep:
+    build: .
+    container_name: passwordkeep
+    ports:
+      - "8088:8080"
+    environment:
+      FLASK_ENV: production
+      SECRET_KEY: change-me-before-production
+      PASSWORDKEEP_DB_PATH: /app/data/passwordkeep.db
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Prvni nastaveni | PasswordKeep{% endblock %}
+
+{% block content %}
+<section class="panel auth-panel">
+  <div>
+    <span class="eyebrow">Prvni spusteni</span>
+    <h1>Vytvor master heslo</h1>
+    <p>Tohle heslo odemyka cely trezor. Bez nej se k ulozenym zaznamum nedostanes.</p>
+  </div>
+
+  <form class="stack-form" method="post">
+    <label>
+      <span>Master heslo</span>
+      <input type="password" name="password" minlength="12" required>
+    </label>
+    <label>
+      <span>Potvrzeni hesla</span>
+      <input type="password" name="password_confirm" minlength="12" required>
+    </label>
+    <button class="primary-button" type="submit">Vytvorit trezor</button>
+  </form>
+</section>
+{% endblock %}

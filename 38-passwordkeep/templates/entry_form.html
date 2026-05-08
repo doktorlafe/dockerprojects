@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ form_title }} | PasswordKeep{% endblock %}
+
+{% block content %}
+<section class="panel form-panel">
+  <div class="panel-heading">
+    <div>
+      <span class="eyebrow">Zaznam</span>
+      <h1>{{ form_title }}</h1>
+    </div>
+    <a class="ghost-button" href="{{ url_for('dashboard') }}">Zpet</a>
+  </div>
+
+  <form class="stack-form" method="post">
+    <label>
+      <span>Nazev sluzby</span>
+      <input type="text" name="site_name" value="{{ entry.site_name if entry else '' }}" required>
+    </label>
+
+    <label>
+      <span>URL</span>
+      <input type="url" name="site_url" value="{{ entry.site_url if entry else '' }}" placeholder="https://example.com">
+    </label>
+
+    <label>
+      <span>Uzivatelske jmeno nebo e-mail</span>
+      <input type="text" name="username" value="{{ entry.username if entry else '' }}" required>
+    </label>
+
+    <label>
+      <span>Heslo</span>
+      <div class="inline-field">
+        <input id="password-field" type="text" name="password" value="{{ entry.plain_password if entry else generated_password }}" required>
+        <button class="ghost-button" type="button" data-generate-password="#password-field">Generovat</button>
+      </div>
+    </label>
+
+    <label>
+      <span>Poznamky</span>
+      <textarea name="notes" rows="4">{{ entry.notes if entry else '' }}</textarea>
+    </label>
+
+    <button class="primary-button" type="submit">{{ submit_label }}</button>
+  </form>
+</section>
+{% endblock %}
