@@ -1,6 +1,6 @@
-# 🐳 30 Docker Projektů - Praktické Příklady
+# 🐳 34 Docker Projektů - Praktické Příklady
 
-Kompletní sbírka 30 Docker projektů seřazených podle obtížnosti. Každý projekt je v samostatné složce a je připraven k spuštění.
+Kompletní sbírka 34 Docker projektů seřazených podle obtížnosti. Každý projekt je v samostatné složce a je připraven k spuštění.
 
 ---
 
@@ -54,11 +54,49 @@ Production-ready, orchestrace, security, monitoring
 | 29 | `29-logging-elk-stack` | ELK stack pro production logging |
 | 30 | `30-production-setup` | Kompletní production setup s monitoring |
 
+### **TIER 4 - Specializované Příklady (31-34)**
+Praktické rozšiřující projekty a specializované scénáře
+
+| # | Projekt | Popis |
+|---|---------|-------|
+| 31 | `31-bazos-monitor-scraper` | Scraper s GUI nad Bazoš.cz pro hledání a hodnocení inzerátů |
+| 32 | `32-f5networks-k8s-bigip-ctlr` | F5 BIG-IP CIS ukázka přes Docker Compose |
+| 33 | `33-sandboxdockerALL` | Docker-in-Docker sandbox pro izolované spouštění celé sbírky |
+| 34 | `34-portainer` | Portainer CE pro správu Dockeru přes webové GUI |
+
 ---
 
 ## 🚀 Rychlý Start
 
 Každý projekt má vlastní složku s README.md.
+
+### Hromadné spouštění přes skript
+```bash
+./docker-projects.sh list
+./docker-projects.sh up 03-nodejs-server
+./docker-projects.sh up all
+./docker-projects.sh down all
+```
+
+Skript je v rootu repozitáře a umí:
+- vypsat dostupné projekty
+- spustit konkrétní projekt
+- zkusit spustit všechny projekty, které dávají smysl přes Docker nebo Docker Compose
+- přeskočit projekty s kolizí host portů nebo s jinými požadavky (např. Kubernetes cluster)
+
+### Izolovaný sandbox mimo hlavní Docker serveru
+Pokud nechceš, aby tyhle příklady zasahovaly do hlavního Docker prostředí serveru, použij sandbox skript:
+
+```bash
+./docker-sandbox.sh start
+./docker-sandbox.sh list
+./docker-sandbox.sh up all
+./docker-sandbox.sh status
+./docker-sandbox.sh down all
+./docker-sandbox.sh stop
+```
+
+Sandbox používá samostatný Docker-in-Docker daemon, takže kontejnery, volumes i sítě zůstanou oddělené od host Dockeru. To je bezpečnější než jeden hromadný `docker-compose.yml`, protože repozitář kombinuje čisté Dockerfile projekty, Compose projekty i příklady s kolidujícími porty.
 
 ### Příklad Tier 1 - Hello World:
 ```bash

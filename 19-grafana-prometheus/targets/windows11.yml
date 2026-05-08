@@ -1,0 +1,4 @@
+- targets:
+    - 192.168.0.109:9182
+  labels:
+    instance: windows11-pc

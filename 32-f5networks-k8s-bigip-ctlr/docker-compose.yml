@@ -1,0 +1,33 @@
+services:
+  cis:
+    image: f5networks/k8s-bigip-ctlr:latest
+    container_name: k8s-bigip-ctlr
+    restart: "no"
+    ports:
+      - "555:555"
+    volumes:
+      - type: bind
+        source: ${KUBECONFIG_PATH:-./config/kubeconfig}
+        target: /config/kubeconfig
+        read_only: true
+        bind:
+          create_host_path: false
+    command:
+      - /app/bin/k8s-bigip-ctlr
+      - --bigip-url=${BIGIP_URL:-}
+      - --bigip-username=${BIGIP_USERNAME:-}
+      - --bigip-password=${BIGIP_PASSWORD:-}
+      - --bigip-partition=${BIGIP_PARTITION:-}
+      - --kubeconfig=/config/kubeconfig
+      - --namespace=${K8S_NAMESPACE:-default}
+      - --http-listen-address=0.0.0.0:8080
+      - --log-level=${LOG_LEVEL:-INFO}
+      - --disable-teems
+
+  cis-smoke:
+    image: f5networks/k8s-bigip-ctlr:latest
+    profiles:
+      - smoke
+    command:
+      - /app/bin/k8s-bigip-ctlr
+      - --version

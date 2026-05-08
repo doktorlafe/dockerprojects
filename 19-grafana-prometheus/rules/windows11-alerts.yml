@@ -1,0 +1,29 @@
+groups:
+  - name: windows11-alerts
+    rules:
+      - alert: WindowsExporterDown
+        expr: up{job="windows11"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Windows exporter je nedostupny"
+          description: "Prometheus se 2 minuty nedokazal scrapeovat target {{ $labels.instance }}."
+
+      - alert: WindowsHighCPU
+        expr: 100 * (1 - avg by (instance) (rate(windows_cpu_time_total{job="windows11",mode="idle"}[5m]))) > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Vysoke CPU na {{ $labels.instance }}"
+          description: "CPU je nad 85 % dele nez 10 minut."
+
+      - alert: WindowsHighMemory
+        expr: 100 * (1 - (windows_os_physical_memory_free_bytes{job="windows11"} / windows_os_visible_memory_bytes{job="windows11"})) > 90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Vysoke vyuziti RAM na {{ $labels.instance }}"
+          description: "RAM je nad 90 % dele nez 10 minut."
